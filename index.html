@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2B50FF" />
+  <title>My Vault - Upload and view your files</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #F3F5F9;
+      --surface: #FFFFFF;
+      --ink: #121A2F;
+      --muted: #5B6784;
+      --line: #DCE1EC;
+      --accent: #2B50FF;
+      --accent-ink: #FFFFFF;
+      --tint: #E6EBFF;
+      --danger: #D6334A;
+      --ok: #12906A;
+      --video: #2B50FF;
+      --image: #0E9AA7;
+      --audio: #D98A12;
+      --doc: #5B6784;
+      --radius: 16px;
+      --shadow: 0 1px 2px rgba(18,26,47,.05), 0 8px 24px -12px rgba(18,26,47,.18);
+      --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+      --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #0C1120;
+        --surface: #141B30;
+        --ink: #EEF1FA;
+        --muted: #98A3C0;
+        --line: #26304D;
+        --accent: #6C86FF;
+        --accent-ink: #0C1120;
+        --tint: #1C2646;
+        --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: var(--body); font-size: 16px; line-height: 1.5;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+    .wrap { width: min(1120px, 100% - 32px); margin: 0 auto; }
+
+    /* Top bar */
+    .bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 1.25rem; letter-spacing: -.02em; }
+    .brand svg { width: 34px; height: 34px; }
+    .bar .hint { color: var(--muted); font-size: .9rem; }
+
+    /* Hero */
+    .hero { display: grid; gap: 22px; padding: 14px 0 8px; }
+    h1 {
+      margin: 0; font-family: var(--display); font-weight: 800;
+      font-size: clamp(2rem, 6.5vw, 3.6rem); line-height: 1.02; letter-spacing: -.035em;
+      max-width: 16ch;
+    }
+    .lede { margin: 0; color: var(--muted); max-width: 52ch; font-size: 1.05rem; }
+
+    .drop {
+      position: relative; display: grid; place-items: center; text-align: center; gap: 6px;
+      padding: 38px 20px; min-height: 220px; border-radius: 22px; background: var(--surface);
+      border: 2px dashed var(--line); cursor: pointer; transition: border-color .2s, background .2s, transform .2s;
+      box-shadow: var(--shadow);
+    }
+    .drop:hover { border-color: var(--accent); }
+    .drop.over { border-color: var(--accent); background: var(--tint); transform: scale(1.01); }
+    .drop .ico {
+      width: 64px; height: 64px; border-radius: 20px; background: var(--accent); color: var(--accent-ink);
+      display: grid; place-items: center; margin-bottom: 8px;
+    }
+    .drop .ico svg { width: 30px; height: 30px; }
+    .drop strong { font-family: var(--display); font-size: 1.35rem; letter-spacing: -.02em; }
+    .drop span { color: var(--muted); }
+    .drop .pick {
+      margin-top: 10px; background: var(--ink); color: var(--paper); border: 0;
+      border-radius: 999px; padding: 11px 22px; font-weight: 600;
+    }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 18px 0 6px; }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .stat b { display: block; font-family: var(--display); font-size: 1.6rem; letter-spacing: -.03em; line-height: 1.1; }
+    .stat span { color: var(--muted); font-size: .88rem; }
+
+    /* Upload queue */
+    .queue { display: grid; gap: 8px; margin-top: 14px; }
+    .qitem { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+    .qtop { display: flex; justify-content: space-between; gap: 10px; font-size: .92rem; }
+    .qtop .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .qtop .p { color: var(--muted); flex: none; }
+    .track { height: 6px; background: var(--tint); border-radius: 6px; margin-top: 8px; overflow: hidden; }
+    .fill { height: 100%; width: 0; background: var(--accent); border-radius: 6px; transition: width .15s; }
+    .qitem.done .fill { background: var(--ok); }
+    .qitem.fail .fill { background: var(--danger); }
+    .qitem.done .p { color: var(--ok); }
+    .qitem.fail .p { color: var(--danger); }
+
+    /* Library toolbar */
+    .library { padding: 30px 0 60px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .toolbar h2 { margin: 0; font-family: var(--display); font-size: 1.5rem; letter-spacing: -.02em; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
+    .search {
+      flex: 1 1 200px; display: flex; align-items: center; gap: 8px; background: var(--surface);
+      border: 1px solid var(--line); border-radius: 12px; padding: 0 12px;
+    }
+    .search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+    .search input { border: 0; background: transparent; width: 100%; padding: 11px 0; outline: none; }
+    .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--tint); }
+    .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; overflow-x: auto; max-width: 100%; }
+    .seg button { border: 0; background: transparent; padding: 8px 13px; border-radius: 9px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+    .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+    .viewseg button { padding: 8px 10px; display: grid; place-items: center; }
+    .viewseg svg { width: 18px; height: 18px; }
+
+    /* Cards */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow);
+    }
+    .thumb {
+      position: relative; border: 0; padding: 0; width: 100%; aspect-ratio: 16 / 10; overflow: hidden;
+      background: var(--tint); display: grid; place-items: center;
+    }
+    .thumb video, .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb .glyph { width: 44px; height: 44px; }
+    .thumb.video { background: #0A0F1E; }
+    .thumb .play {
+      position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+    }
+    .thumb .play i {
+      width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.92); color: #121A2F;
+      display: grid; place-items: center; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    .thumb .play svg { width: 22px; height: 22px; margin-left: 3px; }
+    .badge {
+      position: absolute; left: 10px; top: 10px; background: rgba(18,26,47,.78); color: #fff;
+      border-radius: 8px; padding: 3px 8px; font-size: .75rem; font-weight: 600; backdrop-filter: blur(4px);
+    }
+    .kind-video .glyph { color: var(--video); }
+    .kind-image .glyph { color: var(--image); }
+    .kind-audio .glyph { color: var(--audio); }
+    .kind-doc .glyph { color: var(--doc); }
+    .body { padding: 12px 14px 4px; min-width: 0; flex: 1; }
+    .title { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sub { margin: 2px 0 0; color: var(--muted); font-size: .86rem; }
+    .tools { display: flex; gap: 6px; padding: 8px 10px 12px; }
+    .tool {
+      display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: transparent;
+      border-radius: 10px; padding: 7px 11px; font-size: .88rem; font-weight: 500; text-decoration: none; color: var(--ink);
+    }
+    .tool svg { width: 16px; height: 16px; }
+    .tool:hover { background: var(--tint); }
+    .tool.del { margin-left: auto; color: var(--danger); }
+    .tool.del:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+    .audio-player { width: calc(100% - 28px); margin: 0 14px 6px; height: 36px; }
+
+    /* List view */
+    .grid.list { grid-template-columns: 1fr; gap: 10px; }
+    .grid.list .card { flex-direction: row; align-items: center; }
+    .grid.list .thumb { width: 120px; aspect-ratio: 16 / 10; flex: none; }
+    .grid.list .badge, .grid.list .play i { display: none; }
+    .grid.list .body { padding: 8px 14px; }
+    .grid.list .tools { padding: 8px 12px; }
+    .grid.list .audio-player { display: none; }
+    @media (max-width: 560px) {
+      .grid.list .card { flex-wrap: wrap; }
+      .grid.list .thumb { width: 96px; }
+      .grid.list .body { flex: 1 1 calc(100% - 110px); }
+      .grid.list .tools { width: 100%; padding-top: 0; }
+    }
+
+    /* Empty and loading */
+    .empty { text-align: center; padding: 56px 16px; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); }
+    .empty h3 { margin: 0 0 6px; font-family: var(--display); font-size: 1.3rem; letter-spacing: -.02em; }
+    .empty p { margin: 0 auto; color: var(--muted); max-width: 42ch; }
+
+    /* Viewer */
+    dialog { border: 0; padding: 0; background: transparent; color: #fff; max-width: 100vw; max-height: 100vh; }
+    dialog::backdrop { background: rgba(8,12,24,.86); backdrop-filter: blur(6px); }
+    .viewer { width: min(1000px, 96vw); display: grid; gap: 12px; }
+    .viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .viewer-head p { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .viewer-body { background: #000; border-radius: 14px; overflow: hidden; display: grid; place-items: center; }
+    .viewer-body video, .viewer-body img { width: 100%; max-height: 78vh; object-fit: contain; display: block; }
+    .close { background: rgba(255,255,255,.16); border: 0; color: #fff; border-radius: 10px; padding: 8px 14px; font-weight: 600; }
+    .close:hover { background: rgba(255,255,255,.28); }
+
+    .confirm {
+      background: var(--surface); color: var(--ink); border-radius: 18px; padding: 22px; width: min(400px, 92vw);
+      border: 1px solid var(--line);
+    }
+    .confirm h3 { margin: 0 0 6px; font-family: var(--display); font-size: 1.25rem; letter-spacing: -.02em; }
+    .confirm p { margin: 0 0 18px; color: var(--muted); overflow-wrap: anywhere; }
+    .confirm .row { display: flex; justify-content: flex-end; gap: 8px; }
+    .btn { border-radius: 10px; padding: 10px 16px; font-weight: 600; border: 1px solid var(--line); background: transparent; }
+    .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toasts { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: grid; gap: 8px; z-index: 50; width: min(420px, 92vw); }
+    .toast {
+      background: var(--ink); color: var(--paper); padding: 12px 16px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: .94rem;
+    }
+
+    footer { text-align: center; color: var(--muted); font-size: .86rem; padding: 0 0 36px; }
+
+    @media (min-width: 760px) {
+      .stats { grid-template-columns: repeat(4, 1fr); }
+      .hero { grid-template-columns: 1.05fr 1fr; align-items: center; gap: 40px; padding-top: 30px; }
+      .hero-copy { display: grid; gap: 16px; }
+      .controls { width: auto; flex: 1; justify-content: flex-end; }
+      .toolbar { flex-wrap: nowrap; }
+      .search { max-width: 280px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="bar">
+      <div class="brand">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#2B50FF"/><path d="M11 15.5a3 3 0 0 1 3-3h4.2l2.3 2.6H26a3 3 0 0 1 3 3V25a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3z" fill="#fff"/></svg>
+        My Vault
+      </div>
+      <span class="hint">Private storage</span>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Keep every video and file in one place.</h1>
+        <p class="lede">Upload from your phone or computer, play videos right here, and download anything again whenever you need it.</p>
+      </div>
+      <div>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files to upload">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div>
+          <strong>Drop files here</strong>
+          <span>Videos, photos, audio, PDFs. Up to 500 MB each.</span>
+          <button class="pick" type="button" id="pick">Choose files</button>
+          <input type="file" id="fileInput" multiple hidden />
+        </div>
+        <div class="queue" id="queue" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Library summary">
+      <div class="stat"><b id="sFiles">0</b><span>Files</span></div>
+      <div class="stat"><b id="sVideos">0</b><span>Videos</span></div>
+      <div class="stat"><b id="sImages">0</b><span>Photos</span></div>
+      <div class="stat"><b id="sSize">0 B</b><span>Space used</span></div>
+    </section>
+
+    <section class="library">
+      <div class="toolbar">
+        <h2>Your library</h2>
+        <div class="controls">
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="q" type="search" placeholder="Search by file name" aria-label="Search by file name" />
+          </label>
+          <div class="seg" id="filters" role="group" aria-label="Filter by type">
+            <button type="button" data-f="all" aria-pressed="true">All</button>
+            <button type="button" data-f="video" aria-pressed="false">Videos</button>
+            <button type="button" data-f="image" aria-pressed="false">Photos</button>
+            <button type="button" data-f="audio" aria-pressed="false">Audio</button>
+            <button type="button" data-f="doc" aria-pressed="false">Documents</button>
+          </div>
+          <div class="seg viewseg" id="views" role="group" aria-label="Layout">
+            <button type="button" data-v="grid" aria-pressed="true" aria-label="Grid view"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></button>
+            <button type="button" data-v="list" aria-pressed="false" aria-label="List view"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="4" rx="2"/><rect x="3" y="10" width="18" height="4" rx="2"/><rect x="3" y="16" width="18" height="4" rx="2"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty" hidden></div>
+    </section>
+  </div>
+
+  <footer>My Vault. Files are stored on this server.</footer>
+
+  <dialog id="viewer">
+    <div class="viewer">
+      <div class="viewer-head"><p id="viewerTitle"></p><button class="close" id="viewerClose" type="button">Close</button></div>
+      <div class="viewer-body" id="viewerBody"></div>
+    </div>
+  </dialog>
+
+  <dialog id="confirm" class="confirm">
+    <h3>Delete this file?</h3>
+    <p id="confirmName"></p>
+    <div class="row">
+      <button class="btn" id="confirmNo" type="button">Keep file</button>
+      <button class="btn danger" id="confirmYes" type="button">Delete file</button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const drop = $("#drop"), input = $("#fileInput"), grid = $("#grid"), emptyEl = $("#empty");
+    const queue = $("#queue"), viewer = $("#viewer"), confirmDlg = $("#confirm");
+
+    const EXT = {
+      video: ["mp4", "webm", "ogv", "mov", "mkv", "m4v", "avi", "3gp"],
+      image: ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "avif", "heic"],
+      audio: ["mp3", "wav", "m4a", "aac", "flac", "oga", "opus"],
+    };
+    const state = { files: [], filter: "all", view: "grid", q: "" };
+    let pendingDelete = null;
+
+    const ICONS = {
+      play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+      download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg>',
+      trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
+      audio: '<svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>',
+      doc: '<svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+    };
+
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const extOf = (n) => (n.includes(".") ? n.split(".").pop().toLowerCase() : "");
+    const kindOf = (n) => { const e = extOf(n); return Object.keys(EXT).find((k) => EXT[k].includes(e)) || "doc"; };
+
+    function fmtSize(b) {
+      if (b < 1024) return b + " B";
+      if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+      if (b < 1073741824) return (b / 1048576).toFixed(1) + " MB";
+      return (b / 1073741824).toFixed(2) + " GB";
+    }
+    function fmtAgo(ms) {
+      const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+      const diff = (ms - Date.now()) / 1000;
+      const units = [["day", 86400], ["hour", 3600], ["minute", 60]];
+      for (const [u, s] of units) if (Math.abs(diff) >= s) return rtf.format(Math.round(diff / s), u);
+      return "just now";
+    }
+
+    function toast(msg) {
+      const t = document.createElement("div");
+      t.className = "toast"; t.textContent = msg;
+      $("#toasts").appendChild(t);
+      setTimeout(() => t.remove(), 3200);
+    }
+
+    /* Upload: each file gets its own progress row */
+    ["dragenter", "dragover"].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", (ev) => uploadFiles(ev.dataTransfer.files));
+    drop.addEventListener("click", () => input.click());
+    drop.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); input.click(); } });
+    $("#pick").addEventListener("click", (ev) => { ev.stopPropagation(); input.click(); });
+    input.addEventListener("change", () => { uploadFiles(input.files); input.value = ""; });
+
+    function uploadFiles(list) {
+      [...list].forEach(uploadOne);
+    }
+    function uploadOne(file) {
+      const row = document.createElement("div");
+      row.className = "qitem";
+      row.innerHTML = `<div class="qtop"><span class="n">${esc(file.name)}</span><span class="p">0%</span></div><div class="track"><div class="fill"></div></div>`;
+      queue.prepend(row);
+      const fill = row.querySelector(".fill"), pct = row.querySelector(".p");
+
+      const data = new FormData();
+      data.append("files", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/upload");
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
+        const p = Math.round((e.loaded / e.total) * 100);
+        fill.style.width = p + "%"; pct.textContent = p + "%";
+      };
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          row.classList.add("done"); fill.style.width = "100%"; pct.textContent = "Uploaded";
+          toast(`${file.name} uploaded`);
+          loadFiles();
+        } else {
+          let reason = "Upload failed";
+          try { reason = JSON.parse(xhr.responseText).error || reason; } catch (_) {}
+          row.classList.add("fail"); pct.textContent = reason;
+        }
+        setTimeout(() => row.remove(), 4000);
+      };
+      xhr.onerror = () => { row.classList.add("fail"); pct.textContent = "Network error. Try again."; setTimeout(() => row.remove(), 5000); };
+      xhr.send(data);
+    }
+
+    /* Library */
+    async function loadFiles() {
+      try {
+        const res = await fetch("/files");
+        state.files = await res.json();
+      } catch (_) {
+        toast("Could not load your files. Check the server connection.");
+      }
+      render();
+    }
+
+    function updateStats() {
+      const f = state.files;
+      $("#sFiles").textContent = f.length;
+      $("#sVideos").textContent = f.filter((x) => kindOf(x.displayName) === "video").length;
+      $("#sImages").textContent = f.filter((x) => kindOf(x.displayName) === "image").length;
+      $("#sSize").textContent = fmtSize(f.reduce((a, x) => a + x.size, 0));
+    }
+
+    function cardHTML(f) {
+      const kind = kindOf(f.displayName), ext = extOf(f.displayName);
+      const label = esc(ext || "file").toUpperCase();
+      const n = esc(f.name);
+      let media;
+      if (kind === "video") {
+        media = `<button class="thumb video" data-act="open" data-name="${n}" aria-label="Play ${esc(f.displayName)}"><video muted playsinline preload="metadata" src="${f.url}#t=0.6"></video><span class="play"><i>${ICONS.play}</i></span><span class="badge">${label}</span></button>`;
+      } else if (kind === "image") {
+        media = `<button class="thumb" data-act="open" data-name="${n}" aria-label="View ${esc(f.displayName)}"><img loading="lazy" src="${f.url}" alt="${esc(f.displayName)}"><span class="badge">${label}</span></button>`;
+      } else if (kind === "audio") {
+        media = `<div class="thumb kind-audio">${ICONS.audio}<span class="badge">${label}</span></div>`;
+      } else {
+        const href = ext === "pdf" ? `data-act="open" data-name="${n}"` : `data-act="none"`;
+        media = `<button class="thumb kind-doc" ${href} aria-label="${esc(f.displayName)}">${ICONS.doc}<span class="badge">${label}</span></button>`;
+      }
+      const player = kind === "audio" ? `<audio class="audio-player" controls preload="none" src="${f.url}"></audio>` : "";
+      return `<article class="card kind-${kind}">
+        ${media}
+        <div class="body"><p class="title" title="${esc(f.displayName)}">${esc(f.displayName)}</p><p class="sub">${fmtSize(f.size)}, ${fmtAgo(f.uploadedAt)}</p></div>
+        ${player}
+        <div class="tools">
+          <a class="tool" href="${f.url}" download="${esc(f.displayName)}">${ICONS.download}Download</a>
+          <button class="tool del" type="button" data-act="delete" data-name="${n}" aria-label="Delete ${esc(f.displayName)}">${ICONS.trash}Delete</button>
+        </div>
+      </article>`;
+    }
+
+    function render() {
+      updateStats();
+      const q = state.q.trim().toLowerCase();
+      const list = state.files.filter((f) =>
+        (state.filter === "all" || kindOf(f.displayName) === state.filter) &&
+        (!q || f.displayName.toLowerCase().includes(q)));
+      grid.className = "grid" + (state.view === "list" ? " list" : "");
+      grid.innerHTML = list.map(cardHTML).join("");
+      grid.hidden = list.length === 0;
+      emptyEl.hidden = list.length !== 0;
+      if (!list.length) {
+        emptyEl.innerHTML = state.files.length
+          ? "<h3>No files match</h3><p>Try a different search or choose another file type.</p>"
+          : "<h3>Your library is empty</h3><p>Drop a video, photo, or document above and it will show up here.</p>";
+      }
+    }
+
+    /* Filters, view, search */
+    $("#filters").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button"); if (!b) return;
+      state.filter = b.dataset.f;
+      document.querySelectorAll("#filters button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      render();
+    });
+    $("#views").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button"); if (!b) return;
+      state.view = b.dataset.v;
+      document.querySelectorAll("#views button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      render();
+    });
+    $("#q").addEventListener("input", (ev) => { state.q = ev.target.value; render(); });
+
+    /* Card actions */
+    grid.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-act]"); if (!b) return;
+      const file = state.files.find((f) => f.name === b.dataset.name);
+      if (b.dataset.act === "open" && file) openViewer(file);
+      if (b.dataset.act === "delete" && file) askDelete(file);
+    });
+
+    function openViewer(f) {
+      const kind = kindOf(f.displayName), ext = extOf(f.displayName);
+      $("#viewerTitle").textContent = f.displayName;
+      const body = $("#viewerBody");
+      if (kind === "video") body.innerHTML = `<video controls autoplay playsinline src="${f.url}"></video>`;
+      else if (kind === "image") body.innerHTML = `<img src="${f.url}" alt="${esc(f.displayName)}">`;
+      else if (ext === "pdf") body.innerHTML = `<iframe src="${f.url}" title="${esc(f.displayName)}" style="width:100%;height:78vh;border:0;background:#fff"></iframe>`;
+      viewer.showModal();
+    }
+    function closeViewer() { $("#viewerBody").innerHTML = ""; viewer.close(); }
+    $("#viewerClose").addEventListener("click", closeViewer);
+    viewer.addEventListener("close", () => { $("#viewerBody").innerHTML = ""; });
+    viewer.addEventListener("click", (ev) => { if (ev.target === viewer) closeViewer(); });
+
+    function askDelete(f) {
+      pendingDelete = f;
+      $("#confirmName").textContent = f.displayName;
+      confirmDlg.showModal();
+    }
+    $("#confirmNo").addEventListener("click", () => confirmDlg.close());
+    $("#confirmYes").addEventListener("click", async () => {
+      const f = pendingDelete; confirmDlg.close(); if (!f) return;
+      try {
+        const res = await fetch("/files/" + encodeURIComponent(f.name), { method: "DELETE" });
+        if (!res.ok) throw new Error();
+        toast(`${f.displayName} deleted`);
+      } catch (_) { toast("Could not delete the file. Try again."); }
+      loadFiles();
+    });
+
+    loadFiles();
+  </script>
+</body>
+</html>
