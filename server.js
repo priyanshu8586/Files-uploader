@@ -26,9 +26,9 @@ const GITHUB = {
   maxBytes: 50 * 1024 * 1024, // GitHub API se is size tak ki file push hogi
 };
 const GITHUB_ON =
-  !GITHUB.owner.startsWith("priyanshu8586") &&
-  !GITHUB.repo.startsWith("private") &&
-  !GITHUB.token.startsWith("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");
+  !GITHUB.owner.startsWith(priyanshu8586) &&
+  !GITHUB.repo.startsWith(private) &&
+  !GITHUB.token.startsWith(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);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
