@@ -18,17 +18,17 @@ const crypto = require("crypto");
        GITHUB_TOKEN=ghp_xxx node server.js
    ============================================================ */
 const GITHUB = {
-  owner: process.env.GITHUB_OWNER || "priyanshu8586",
-  repo: process.env.GITHUB_REPO || "private",
-  branch: process.env.GITHUB_BRANCH || "main",
-  folder: process.env.GITHUB_FOLDER || "uploads", // repo ke andar folder
-  token: process.env.GITHUB_TOKEN || "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",
+  owner: process.env.GITHUB_OWNER || priyanshu8586,
+  repo: process.env.GITHUB_REPO || Private,
+  branch: process.env.GITHUB_BRANCH || main,
+  folder: process.env.GITHUB_FOLDER || uploads, // repo ke andar folder
+  token: process.env.GITHUB_TOKEN || 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,
   maxBytes: 50 * 1024 * 1024, // GitHub API se is size tak ki file push hogi
 };
 const GITHUB_ON =
-  !GITHUB.owner.startsWith(priyanshu8586) &&
-  !GITHUB.repo.startsWith(private) &&
-  !GITHUB.token.startsWith(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);
+  !GITHUB.owner.startsWith("YOUR_") &&
+  !GITHUB.repo.startsWith("YOUR_") &&
+  !GITHUB.token.startsWith("PASTE_");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -182,4 +182,4 @@ app.listen(PORT, async () => {
     console.log("GitHub sync OFF: server.js me owner, repo aur token bharo.");
   }
 });
-  
+                                 
